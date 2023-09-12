@@ -1,6 +1,6 @@
 # Google Maps Implementation Using Riverpod
 
-<img src="screenshots/Screenshot_1694494989.png" alt="Screenshot 2" width="200">
+<img src="screenshots/Screenshot_1694494989.png" alt="Screenshot 2" width="250">
 
 ## Overview
 
@@ -20,7 +20,7 @@ This project is a demonstration of how to integrate Google Maps into a Flutter a
 To get started with this project, follow these steps:
 
 1. Clone this repository:
-   git clone https://github.com/your-username/google-maps-riverpod.git
+   git clone https://github.com/risfat/google-maps-riverpod.git
 2. Change into the project directory:
    cd google-maps-riverpod
 3. Install the required dependencies:
