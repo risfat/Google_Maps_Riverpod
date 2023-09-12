@@ -1,6 +1,6 @@
 # Google Maps Implementation Using Riverpod
 
-![Google Maps Implementation Using Riverpod](screenshots/demo.png)
+<img src="screenshots/Screenshot_1694494989.png" alt="Screenshot 2" width="200">
 
 ## Overview
 
@@ -26,6 +26,8 @@ To get started with this project, follow these steps:
 3. Install the required dependencies:
    flutter pub get
 4. Add your Google Maps API Key to the android/app/src/main/AndroidManifest.xml file and ios/Runner/AppDelegate.swift file. Replace YOUR_API_KEY with your actual API key.
+   
+
    ``<!-- android/app/src/main/AndroidManifest.xml -->
    <meta-data
    android:name="com.google.android.geo.API_KEY"
@@ -34,14 +36,15 @@ To get started with this project, follow these steps:
    ``// ios/Runner/AppDelegate.swift
    GMSServices.provideAPIKey("YOUR_API_KEY")
    ``
+
 ## Features
-   # Display a Google Map in the Flutter app.
-   # Add markers to the map.
-   # Implement state management using Riverpod.
-   # Showcase best practices for integrating Google Maps.
+   ### Display a Google Map in the Flutter app.
+   ### Add markers to the map.
+   ### Implement state management using Riverpod.
+   ### Showcase best practices for integrating Google Maps.
 
 ## Screenshots
 
-   ![Google Maps Implementation Using Riverpod](screenshots/Screenshot_1694494885.png)
-   ![Google Maps Implementation Using Riverpod](screenshots/Screenshot_1694494989.png)
-   ![Google Maps Implementation Using Riverpod](screenshots/Screenshot_1694495029.png)
+   <img src="screenshots/Screenshot_1694494885.png" alt="Screenshot 1" width="200">
+   <img src="screenshots/Screenshot_1694494989.png" alt="Screenshot 2" width="200">
+   <img src="screenshots/Screenshot_1694495029.png" alt="Screenshot 2" width="200">
