@@ -38,13 +38,13 @@ To get started with this project, follow these steps:
    ``
 
 ## Features
-   ### Display a Google Map in the Flutter app.
-   ### Add markers to the map.
-   ### Implement state management using Riverpod.
-   ### Showcase best practices for integrating Google Maps.
+   - Display a Google Map in the Flutter app.
+   -  Add markers to the map.
+   -  Implement state management using Riverpod.
+   -  Showcase best practices for integrating Google Maps.
 
 ## Screenshots
 
-   <img src="screenshots/Screenshot_1694494885.png" alt="Screenshot 1" width="200">
-   <img src="screenshots/Screenshot_1694494989.png" alt="Screenshot 2" width="200">
-   <img src="screenshots/Screenshot_1694495029.png" alt="Screenshot 2" width="200">
+   <img src="screenshots/Screenshot_1694494885.png" alt="Screenshot 1" width="300">
+   <img src="screenshots/Screenshot_1694494989.png" alt="Screenshot 2" width="300">
+   <img src="screenshots/Screenshot_1694495029.png" alt="Screenshot 2" width="300">
