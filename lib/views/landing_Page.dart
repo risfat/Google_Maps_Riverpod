@@ -6,7 +6,9 @@ import 'dart:developer' as developer;
 import 'dart:ui' as ui;
 import 'package:fab_circular_menu_plus/fab_circular_menu_plus.dart';
 import 'package:flip_card/flip_card.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
@@ -72,6 +74,17 @@ class _PracticePageState extends ConsumerState<LandingPage> {
 //! Current camera position
   CameraPosition _currentCameraPosition =
       _kGooglePlex; //initially set to starting camera position.
+
+
+  List<LatLng> polylineCoordinates = [];
+  Position? currentLocation;
+  StreamSubscription<Position>? _locationSubscription;
+
+  BitmapDescriptor currentLocationIcon =
+  BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+
+  late GoogleMapController mapController;
+
 //!onChange Function to assign session token to the user
   onChange(String inputValue) {
     if (_sessionToken.isEmpty) {
@@ -87,6 +100,57 @@ class _PracticePageState extends ConsumerState<LandingPage> {
     }) //to close the keyboard if any
         .onError((error, stackTrace) => null);
     return await Geolocator.getCurrentPosition();
+  }
+
+  void getCurrentLiveLocation() async {
+    late LocationSettings locationSettings;
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      locationSettings = AndroidSettings(
+          accuracy: LocationAccuracy.high,
+          // distanceFilter: 100,
+          forceLocationManager: false,
+          intervalDuration: const Duration(seconds: 0),
+          //(Optional) Set foreground notification config to keep the app alive
+          //when going to the background
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationText:
+            "The App will continue to receive your location even when you aren't using it",
+            notificationTitle: "Running in Background",
+            enableWakeLock: true,
+          ));
+    } else if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      locationSettings = AppleSettings(
+        accuracy: LocationAccuracy.high,
+        activityType: ActivityType.automotiveNavigation,
+        // distanceFilter: 100,
+        pauseLocationUpdatesAutomatically: true,
+        // Only set to true if our app will be started up in the background.
+        showBackgroundLocationIndicator: false,
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        // distanceFilter: 100,
+      );
+    }
+
+    if (_locationSubscription != null) {
+      _locationSubscription!.cancel();
+    }
+
+    _locationSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position? position) {
+          mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+            zoom: 16.0,
+            target: LatLng(position!.latitude, position.longitude),
+          )));
+          setCustomMarker(position.latitude, position.longitude, position.heading);
+          print("Lat: ${position.latitude} , Long: ${position.longitude}");
+
+        });
   }
 
 //! function to retrieve the autocomplete data from get-places API of google maps
@@ -141,6 +205,81 @@ class _PracticePageState extends ConsumerState<LandingPage> {
     });
   }
 
+  void setCustomMarker(lat, long, head){
+    _markers.add(
+        Marker(
+      markerId: const MarkerId("currentLocation"),
+      icon: currentLocationIcon,
+      position: LatLng(
+        lat,
+        long,
+      ),
+      rotation: head,
+      draggable: false,
+      zIndex: 2,
+      flat: true,
+      anchor: const Offset(0.5, 0.5),
+    ));
+
+    setState(() {
+
+    });
+  }
+
+
+  void setCustomMarkerIcon(){
+    BitmapDescriptor.fromAssetImage(
+        ImageConfiguration.empty, "assets/bus_silver.png")
+        .then((icon) {
+      currentLocationIcon = icon;
+    });
+  }
+
+// Declare and initialize the markerKey
+  final GlobalKey markerKey = GlobalKey();
+
+  void setCustomMarkerWidget() async {
+
+    await Future.delayed(const Duration(seconds: 3));
+
+    Uint8List? customMarkerIconBytes = await _captureCustomMarkerIcon("Marker 1");
+
+    if (customMarkerIconBytes != null) {
+      currentLocationIcon = BitmapDescriptor.fromBytes(customMarkerIconBytes);
+      setState(() {
+        // Update the state with the new marker icon
+      });
+    }else{
+      print("======================");
+    }
+    }
+
+  Future<Uint8List?> _captureCustomMarkerIcon(String title) async {
+    RenderRepaintBoundary boundary =
+    markerKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    return byteData?.buffer.asUint8List();
+  }
+
+  Widget customMarkerWidget(String title, Color color) {
+    return RepaintBoundary(
+      key: markerKey, // Use the markerKey here
+      child: Container(
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        padding: EdgeInsets.all(8.0),
+        child: Text(
+          title,
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
 //! Function to set polyline on the map upon searching
   void _setPolyline(List<PointLatLng> points) {
     final String polylineIdVal = 'polyline_$polylineIdCounter';
@@ -161,7 +300,7 @@ class _PracticePageState extends ConsumerState<LandingPage> {
         CameraPosition(target: point, zoom: 12)));
     setState(() {
       _circles.add(Circle(
-          circleId: const CircleId('raj'),
+          circleId: const CircleId('RR'),
           center: point,
           fillColor: Colors.blue.withOpacity(0.1),
           radius: radiusValue,
@@ -185,6 +324,11 @@ class _PracticePageState extends ConsumerState<LandingPage> {
 //! initial State upon loading & dispose upon widget when completely removed from tree
   @override
   void initState() {
+    setCustomMarkerIcon();
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   // Call _captureCustomMarkerIcon after the widget is built
+    //   setCustomMarkerWidget();
+    // });
     super.initState();
   }
 
@@ -195,7 +339,6 @@ class _PracticePageState extends ConsumerState<LandingPage> {
     _originController.dispose();
     _destinationController.dispose();
     _debounce?.cancel();
-    PageController().dispose();
   }
 
   @override
@@ -217,6 +360,7 @@ class _PracticePageState extends ConsumerState<LandingPage> {
                     mapType: MapType.normal,
                     onMapCreated: (controller) {
                       _controller.complete(controller);
+                      mapController = controller;
                     },
                     markers: _markers,
                     polylines: _polyLines,
@@ -231,6 +375,7 @@ class _PracticePageState extends ConsumerState<LandingPage> {
                   )),
               //!stack of navigate to user current location using GPS
               showGPSLocator(),
+              showLiveLocation(),
               //!Stack to show origin to Destination Direction
               getDirectionAndOriginToDestinationNavigate(),
               //!Stack to show navigation autocomplete result
@@ -282,6 +427,23 @@ class _PracticePageState extends ConsumerState<LandingPage> {
             });
           },
           child: const Icon(Icons.my_location_rounded),
+        ),
+      ),
+    );
+  }
+
+  //! Function for GPS locator in stack
+  Positioned showLiveLocation() {
+    return Positioned(
+      bottom: MediaQuery.of(context).size.height * 0.21,
+      right: 5,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 20.0),
+        child: FloatingActionButton(
+          onPressed: () async {
+            getCurrentLiveLocation();
+          },
+          child: const Icon(Icons.delivery_dining),
         ),
       ),
     );
