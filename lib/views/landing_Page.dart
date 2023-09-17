@@ -3,12 +3,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:fab_circular_menu_plus/fab_circular_menu_plus.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
@@ -18,6 +18,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_riverpod/utils/constants.dart';
 import 'package:http/http.dart' as http;
+import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'package:uuid/uuid.dart';
 
 import '../services/map_services.dart';
@@ -69,18 +70,18 @@ class _PracticePageState extends ConsumerState<LandingPage> {
 //! Getting uuid of the device of the user & session token
   var uuid = const Uuid();
   String _sessionToken = '122344';
-  List<dynamic> _placesList = [];
 
 //! Current camera position
   CameraPosition _currentCameraPosition =
       _kGooglePlex; //initially set to starting camera position.
 
-
-  List<LatLng> polylineCoordinates = [];
   Position? currentLocation;
   StreamSubscription<Position>? _locationSubscription;
 
   BitmapDescriptor currentLocationIcon =
+  BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+
+  BitmapDescriptor arrowIcon =
   BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
 
   late GoogleMapController mapController;
@@ -101,6 +102,43 @@ class _PracticePageState extends ConsumerState<LandingPage> {
         .onError((error, stackTrace) => null);
     return await Geolocator.getCurrentPosition();
   }
+
+  List<LatLng> polylinePoints = [];
+
+
+  num calculateBearing(mt.LatLng start, mt.LatLng end) {
+    return mt.SphericalUtil.computeHeading(start, end);
+  }
+
+
+  List<Marker> createArrowMarkers(List<LatLng> polylinePoints, int gap) {
+    List<Marker> markers = [];
+
+    if (polylinePoints.length < gap + 1) {
+      // There are not enough points to create multiple arrows
+      return markers;
+    }
+
+    for (int i = gap; i < polylinePoints.length; i += gap) {
+      LatLng start = polylinePoints[i - gap];
+      LatLng end = polylinePoints[i];
+
+
+      Marker arrowMarker = Marker(
+        markerId: MarkerId('arrow_$i'), // Unique marker ID for each arrow
+        position: end,
+        icon: arrowIcon,
+        rotation: calculateBearing(mt.LatLng(start.latitude, start.longitude ), mt.LatLng(end.latitude, end.longitude )).toDouble() - 87,
+      );
+
+      markers.add(arrowMarker);
+    }
+
+    return markers;
+  }
+
+
+
 
   void getCurrentLiveLocation() async {
     late LocationSettings locationSettings;
@@ -149,6 +187,18 @@ class _PracticePageState extends ConsumerState<LandingPage> {
           )));
           setCustomMarker(position.latitude, position.longitude, position.heading);
           print("Lat: ${position.latitude} , Long: ${position.longitude}");
+          polylinePoints.add(LatLng(position.latitude, position.longitude));
+
+          // Draw the polyline on the map
+          final polyline = Polyline(
+            polylineId: const PolylineId('vehicle_route'),
+            points: polylinePoints,
+            color: Colors.blue, // You can customize the polyline color
+            width: 5,
+          );
+
+          _polyLines.add(polyline);
+          _markers.addAll(createArrowMarkers(polylinePoints, 50));
 
         });
   }
@@ -233,52 +283,57 @@ class _PracticePageState extends ConsumerState<LandingPage> {
         .then((icon) {
       currentLocationIcon = icon;
     });
+    BitmapDescriptor.fromAssetImage(
+        const ImageConfiguration(size: Size(48, 48)), "assets/mapicons/arrow.png")
+        .then((icon) {
+      arrowIcon = icon;
+    });
   }
 
 // Declare and initialize the markerKey
   final GlobalKey markerKey = GlobalKey();
 
-  void setCustomMarkerWidget() async {
+  // void setCustomMarkerWidget() async {
+  //
+  //   await Future.delayed(const Duration(seconds: 3));
+  //
+  //   Uint8List? customMarkerIconBytes = await _captureCustomMarkerIcon("Marker 1");
+  //
+  //   if (customMarkerIconBytes != null) {
+  //     currentLocationIcon = BitmapDescriptor.fromBytes(customMarkerIconBytes);
+  //     setState(() {
+  //       // Update the state with the new marker icon
+  //     });
+  //   }else{
+  //     print("======================");
+  //   }
+  //   }
 
-    await Future.delayed(const Duration(seconds: 3));
-
-    Uint8List? customMarkerIconBytes = await _captureCustomMarkerIcon("Marker 1");
-
-    if (customMarkerIconBytes != null) {
-      currentLocationIcon = BitmapDescriptor.fromBytes(customMarkerIconBytes);
-      setState(() {
-        // Update the state with the new marker icon
-      });
-    }else{
-      print("======================");
-    }
-    }
-
-  Future<Uint8List?> _captureCustomMarkerIcon(String title) async {
-    RenderRepaintBoundary boundary =
-    markerKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
-    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
-    return byteData?.buffer.asUint8List();
-  }
-
-  Widget customMarkerWidget(String title, Color color) {
-    return RepaintBoundary(
-      key: markerKey, // Use the markerKey here
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
-        padding: EdgeInsets.all(8.0),
-        child: Text(
-          title,
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
-  }
+  // Future<Uint8List?> _captureCustomMarkerIcon(String title) async {
+  //   RenderRepaintBoundary boundary =
+  //   markerKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+  //   ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  //   ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  //
+  //   return byteData?.buffer.asUint8List();
+  // }
+  //
+  // Widget customMarkerWidget(String title, Color color) {
+  //   return RepaintBoundary(
+  //     key: markerKey, // Use the markerKey here
+  //     child: Container(
+  //       decoration: BoxDecoration(
+  //         color: color,
+  //         shape: BoxShape.circle,
+  //       ),
+  //       padding: EdgeInsets.all(8.0),
+  //       child: Text(
+  //         title,
+  //         style: TextStyle(color: Colors.white),
+  //       ),
+  //     ),
+  //   );
+  // }
 
 //! Function to set polyline on the map upon searching
   void _setPolyline(List<PointLatLng> points) {

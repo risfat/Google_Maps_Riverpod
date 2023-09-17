@@ -44,6 +44,7 @@ dependencies:
   lottie: ^2.6.0
   uuid: ^4.0.0
   fab_circular_menu_plus: ^0.0.1
+  maps_toolkit: ^2.0.1
 
 dev_dependencies:
   flutter_test:
