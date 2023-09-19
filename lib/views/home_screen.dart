@@ -5,33 +5,33 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:math';
 import 'dart:ui' as ui;
-import 'package:fab_circular_menu_plus/fab_circular_menu_plus.dart';
-import 'package:flip_card/flip_card.dart';
+import 'package:clippy_flutter/triangle.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_riverpod/providers/info_window_provider.dart';
 import 'package:google_maps_riverpod/utils/constants.dart';
+import 'package:google_maps_riverpod/views/widgets/custom_info_window.dart';
 import 'package:http/http.dart' as http;
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'package:uuid/uuid.dart';
 
+import '../models/vehicle_model.dart';
 import '../services/map_services.dart';
 
-class LandingPage extends ConsumerStatefulWidget {
-  const LandingPage({super.key});
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
   _PracticePageState createState() => _PracticePageState();
 }
 
-class _PracticePageState extends ConsumerState<LandingPage> {
+class _PracticePageState extends ConsumerState<HomeScreen> {
 //! Debounce for smooth ui upon searching
   Timer? _debounce;
 
@@ -45,8 +45,9 @@ class _PracticePageState extends ConsumerState<LandingPage> {
   bool radiusSlider = false;
   bool pressedNear = false;
 
-// !global keys
-  final GlobalKey<FabCircularMenuPlusState> fabKey = GlobalKey();
+
+  final double _infoWindowWidth = 250;
+  final double _markerOffset = 170;
 
 //! variables & Constants
 
@@ -79,10 +80,10 @@ class _PracticePageState extends ConsumerState<LandingPage> {
   StreamSubscription<Position>? _locationSubscription;
 
   BitmapDescriptor currentLocationIcon =
-  BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+      BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
 
   BitmapDescriptor arrowIcon =
-  BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+      BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
 
   late GoogleMapController mapController;
 
@@ -105,11 +106,9 @@ class _PracticePageState extends ConsumerState<LandingPage> {
 
   List<LatLng> polylinePoints = [];
 
-
   num calculateBearing(mt.LatLng start, mt.LatLng end) {
     return mt.SphericalUtil.computeHeading(start, end);
   }
-
 
   List<Marker> createArrowMarkers(List<LatLng> polylinePoints, int gap) {
     List<Marker> markers = [];
@@ -123,12 +122,14 @@ class _PracticePageState extends ConsumerState<LandingPage> {
       LatLng start = polylinePoints[i - gap];
       LatLng end = polylinePoints[i];
 
-
       Marker arrowMarker = Marker(
         markerId: MarkerId('arrow_$i'), // Unique marker ID for each arrow
         position: end,
         icon: arrowIcon,
-        rotation: calculateBearing(mt.LatLng(start.latitude, start.longitude ), mt.LatLng(end.latitude, end.longitude )).toDouble() - 87,
+        rotation: calculateBearing(mt.LatLng(start.latitude, start.longitude),
+                    mt.LatLng(end.latitude, end.longitude))
+                .toDouble() -
+            87,
       );
 
       markers.add(arrowMarker);
@@ -136,9 +137,6 @@ class _PracticePageState extends ConsumerState<LandingPage> {
 
     return markers;
   }
-
-
-
 
   void getCurrentLiveLocation() async {
     late LocationSettings locationSettings;
@@ -153,7 +151,7 @@ class _PracticePageState extends ConsumerState<LandingPage> {
           //when going to the background
           foregroundNotificationConfig: const ForegroundNotificationConfig(
             notificationText:
-            "The App will continue to receive your location even when you aren't using it",
+                "The App will continue to receive your location even when you aren't using it",
             notificationTitle: "Running in Background",
             enableWakeLock: true,
           ));
@@ -181,26 +179,25 @@ class _PracticePageState extends ConsumerState<LandingPage> {
     _locationSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position? position) {
-          mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-            zoom: 16.0,
-            target: LatLng(position!.latitude, position.longitude),
-          )));
-          setCustomMarker(position.latitude, position.longitude, position.heading);
-          print("Lat: ${position.latitude} , Long: ${position.longitude}");
-          polylinePoints.add(LatLng(position.latitude, position.longitude));
+      mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+        zoom: 16.0,
+        target: LatLng(position!.latitude, position.longitude),
+      )));
+      setCustomMarker(position);
+      print("Lat: ${position.latitude} , Long: ${position.longitude}");
+      polylinePoints.add(LatLng(position.latitude, position.longitude));
 
-          // Draw the polyline on the map
-          final polyline = Polyline(
-            polylineId: const PolylineId('vehicle_route'),
-            points: polylinePoints,
-            color: Colors.blue, // You can customize the polyline color
-            width: 5,
-          );
+      // Draw the polyline on the map
+      final polyline = Polyline(
+        polylineId: const PolylineId('vehicle_route'),
+        points: polylinePoints,
+        color: Colors.blue, // You can customize the polyline color
+        width: 5,
+      );
 
-          _polyLines.add(polyline);
-          _markers.addAll(createArrowMarkers(polylinePoints, 50));
-
-        });
+      _polyLines.add(polyline);
+      _markers.addAll(createArrowMarkers(polylinePoints, 50));
+    });
   }
 
 //! function to retrieve the autocomplete data from get-places API of google maps
@@ -246,8 +243,31 @@ class _PracticePageState extends ConsumerState<LandingPage> {
     final Marker marker = Marker(
         markerId: MarkerId('marker_$counter'),
         position: point,
-        infoWindow: InfoWindow(title: info),
-        onTap: () {},
+        onTap: ()  async{
+          debugPrint("===================Marker tapped =================");
+          final providerObject = ref.read(infoWindowProvider);
+          providerObject.updateInfoWindow(
+            context,
+            mapController,
+            point,
+            _infoWindowWidth,
+            _markerOffset,
+          );
+          providerObject
+              .updateVehicle(
+              Vehicle(
+                  2,
+                  "Demo Vehicle 2",
+                  true,
+                  "17/9/2023 - 2:21 PM",
+                  0,
+                point,
+                Position(longitude: providerObject.vehicle!.coordinate.latitude, latitude: providerObject.vehicle!.coordinate.longitude, timestamp: null, accuracy: 0, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0)
+              )
+          );
+          providerObject.updateVisibility(true);
+          providerObject.rebuildInfoWindow();
+        },
         icon: BitmapDescriptor.defaultMarker);
 
     setState(() {
@@ -255,43 +275,68 @@ class _PracticePageState extends ConsumerState<LandingPage> {
     });
   }
 
-  void setCustomMarker(lat, long, head){
-    _markers.add(
-        Marker(
+  void setCustomMarker(Position position) {
+    _markers.add(Marker(
       markerId: const MarkerId("currentLocation"),
       icon: currentLocationIcon,
       position: LatLng(
-        lat,
-        long,
+        position.latitude,
+        position.longitude,
       ),
-      rotation: head,
+      rotation: position.heading,
       draggable: false,
       zIndex: 2,
       flat: true,
       anchor: const Offset(0.5, 0.5),
+      // infoWindow: InfoWindow(title: "Test"),
+      onTap: () {
+        debugPrint("===================Marker tapped =================");
+        final providerObject = ref.read(infoWindowProvider);
+        providerObject.updateInfoWindow(
+          context,
+          mapController,
+          LatLng(
+            position.latitude,
+            position.longitude,
+          ),
+          _infoWindowWidth,
+          _markerOffset,
+        );
+        providerObject.updateVehicle(
+            Vehicle(
+            1,
+            "Demo Vehicle",
+            false,
+            "17/9/2023 - 2:21 PM",
+            0,
+            LatLng(position.latitude, position.longitude),
+            position
+        )
+        );
+        providerObject.updateVisibility(true);
+        providerObject.rebuildInfoWindow();
+      },
     ));
 
-    setState(() {
-
-    });
+    setState(() {});
   }
 
-
-  void setCustomMarkerIcon(){
+  void setCustomMarkerIcon() {
     BitmapDescriptor.fromAssetImage(
-        ImageConfiguration.empty, "assets/bus_silver.png")
+            ImageConfiguration.empty, "assets/bus_silver.png")
         .then((icon) {
       currentLocationIcon = icon;
     });
     BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(size: Size(48, 48)), "assets/mapicons/arrow.png")
+            const ImageConfiguration(size: Size(48, 48)),
+            "assets/mapicons/arrow.png")
         .then((icon) {
       arrowIcon = icon;
     });
   }
 
 // Declare and initialize the markerKey
-  final GlobalKey markerKey = GlobalKey();
+//   final GlobalKey markerKey = GlobalKey();
 
   // void setCustomMarkerWidget() async {
   //
@@ -365,16 +410,16 @@ class _PracticePageState extends ConsumerState<LandingPage> {
     });
   }
 
-  Future<Uint8List> getBytesFromAsset(String path, int width) async {
-    ByteData data = await rootBundle.load(path);
-
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetWidth: width);
-    ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
-        .buffer
-        .asUint8List();
-  }
+  // Future<Uint8List> getBytesFromAsset(String path, int width) async {
+  //   ByteData data = await rootBundle.load(path);
+  //
+  //   ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
+  //       targetWidth: width);
+  //   ui.FrameInfo fi = await codec.getNextFrame();
+  //   return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
+  //       .buffer
+  //       .asUint8List();
+  // }
 
 //! initial State upon loading & dispose upon widget when completely removed from tree
   @override
@@ -398,6 +443,8 @@ class _PracticePageState extends ConsumerState<LandingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final providerObject = ref.watch(infoWindowProvider);
+
     return Scaffold(
       body: SingleChildScrollView(
           child: Center(
@@ -422,12 +469,33 @@ class _PracticePageState extends ConsumerState<LandingPage> {
                     circles: _circles,
                     onCameraMove: (CameraPosition position) {
                       _currentCameraPosition = position;
+                      if (providerObject.vehicle != null) {
+                        providerObject.updateInfoWindow(
+                          context,
+                          mapController,
+                          LatLng(providerObject.vehicle!.coordinate.latitude, providerObject.vehicle!.coordinate.longitude),
+                          _infoWindowWidth,
+                          _markerOffset,
+                        );
+                        providerObject.rebuildInfoWindow();
+                      }
                     },
-                    onTap: (point) {
-                      tappedPoint = point;
-                      _setCircle(point);
+                    onTap: (position) {
+                      if (providerObject.showInfoWindow) {
+                        providerObject.updateVisibility(false);
+                        providerObject.rebuildInfoWindow();
+                      }
+
+                      //For the circle
+
+                      // tappedPoint = position;
+                      // _setCircle(position);
                     },
                   )),
+              Positioned(
+                  left: 0,
+                  top: 0,
+                  child: CustomInfoWidget(providerObject: providerObject)),
               //!stack of navigate to user current location using GPS
               showGPSLocator(),
               showLiveLocation(),
@@ -600,9 +668,9 @@ class _PracticePageState extends ConsumerState<LandingPage> {
                 suffixIcon: Container(
                     child: IconButton(
                         onPressed: () async {
-                          var directions = await MapServices()
-                              .getDirections(_originController.text,
-                                  _destinationController.text);
+                          var directions = await MapServices().getDirections(
+                              _originController.text,
+                              _destinationController.text);
                           _markers = {};
                           _polyLines = {};
                           gotoPlace(
@@ -773,7 +841,8 @@ class _PracticePageState extends ConsumerState<LandingPage> {
                     ),
                     const Text('No results to show',
                         style: TextStyle(
-                            fontFamily: 'WorkSans', fontWeight: FontWeight.w400)),
+                            fontFamily: 'WorkSans',
+                            fontWeight: FontWeight.w400)),
                     const SizedBox(height: 5.0),
                     SizedBox(
                       width: 125.0,

@@ -33,6 +33,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
+  clippy_flutter:
+    dependency: "direct main"
+    description:
+      name: clippy_flutter
+      sha256: f63f487afe1233f7189f83154aa9f4903dddda61687b5b81ce4955250c133a07
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0-nullsafety.1"
   clock:
     dependency: transitive
     description:
@@ -81,22 +89,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
-  dartz:
-    dependency: "direct main"
-    description:
-      name: dartz
-      sha256: e6acf34ad2e31b1eb00948692468c30ab48ac8250e0f0df661e29f12dd252168
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.10.1"
-  fab_circular_menu_plus:
-    dependency: "direct main"
-    description:
-      name: fab_circular_menu_plus
-      sha256: "2b4c25c2fa88d986483ed230dc30fa82e19a13c5258a0cf65f6255ff48fa1d80"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.1"
   fake_async:
     dependency: transitive
     description:
@@ -129,14 +121,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.7.0"
-  flip_card:
-    dependency: "direct main"
-    description:
-      name: flip_card
-      sha256: "5d4aa58f3983cced0782f4ce45826b7eea36e8e464964d9209dcbc7a87b2292f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.0"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -166,14 +150,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
-  flutter_rating_stars:
-    dependency: "direct main"
-    description:
-      name: flutter_rating_stars
-      sha256: e03a85bd5c360fd27ef29faa931c98dc58e16387e328071c07bcf3a4c10000af
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.3+4"
   flutter_riverpod:
     dependency: "direct main"
     description:
@@ -408,6 +384,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
+  nested:
+    dependency: transitive
+    description:
+      name: nested
+      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   path:
     dependency: transitive
     description:
@@ -432,6 +416,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.7.3"
+  provider:
+    dependency: "direct main"
+    description:
+      name: provider
+      sha256: cdbe7530b12ecd9eb455bdaa2fcb8d4dad22e80b8afb4798b41479d5ce26847f
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.5"
   riverpod:
     dependency: transitive
     description:

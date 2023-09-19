@@ -48,3 +48,4 @@ To get started with this project, follow these steps:
    <img src="screenshots/Screenshot_1694494885.png" alt="Screenshot 1" width="300">
    <img src="screenshots/Screenshot_1694494989.png" alt="Screenshot 2" width="300">
    <img src="screenshots/Screenshot_1694495029.png" alt="Screenshot 2" width="300">
+   <img src="screenshots/Screenshot_1694949123.png" alt="Screenshot 2" width="300">

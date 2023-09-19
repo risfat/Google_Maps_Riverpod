@@ -31,11 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  dartz: ^0.10.1
   firebase_core: ^2.15.1
-  flip_card: ^0.7.0
   flutter_polyline_points: ^2.0.0
-  flutter_rating_stars: ^1.0.3+4
   flutter_riverpod: ^2.4.0
   geocoding: ^2.1.0
   geolocator: ^10.0.1
@@ -43,8 +40,9 @@ dependencies:
   http: ^1.1.0
   lottie: ^2.6.0
   uuid: ^4.0.0
-  fab_circular_menu_plus: ^0.0.1
   maps_toolkit: ^2.0.1
+  provider: ^6.0.5
+  clippy_flutter: ^2.0.0-nullsafety.1
 
 dev_dependencies:
   flutter_test:
