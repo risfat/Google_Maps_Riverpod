@@ -20,6 +20,7 @@ import 'package:http/http.dart' as http;
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'package:uuid/uuid.dart';
 
+import '../models/location_cordinates.dart';
 import '../models/vehicle_model.dart';
 import '../services/map_services.dart';
 
@@ -84,6 +85,9 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
 
   BitmapDescriptor arrowIcon =
       BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+
+  BitmapDescriptor markerIcon =
+  BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
 
   late GoogleMapController mapController;
 
@@ -183,7 +187,7 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
         zoom: 16.0,
         target: LatLng(position!.latitude, position.longitude),
       )));
-      setCustomMarker(position);
+      setVehicleMarker(position);
       print("Lat: ${position.latitude} , Long: ${position.longitude}");
       polylinePoints.add(LatLng(position.latitude, position.longitude));
 
@@ -198,6 +202,25 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
       _polyLines.add(polyline);
       _markers.addAll(createArrowMarkers(polylinePoints, 50));
     });
+  }
+
+  // Draw the polyline on the map
+  _drawPolyLines(List<LatLng> listOfPolyLinePoints){
+
+    // const encodedPolyPointsString = "me}oCwksfPiB|@w@^a@T]R[PaBv@{BfAcAf@]NsAn@w@\\UNqAp@m@Vy@`@_@P_@RKD]VeA`@e@RsAn@q@RQDOFWJSJQJWNEBEBGHgAj@}Ax@qAp@oAn@[NuAp@KFA@A?[NOFg@RKF_Ad@}@f@ULmAp@qBbAmAl@_@Pa@R[Na@ROHyAt@SJk@Xo@ZeAf@_Ab@_Ab@_@P_@P_Bt@aBt@kA`@i@PQF}Br@a@LiBh@kDbAIBKB}Bn@IBiD|@yBn@MBa@LoCv@cBf@cBh@kAZcAXYHiD|@oA\\u@X}@d@[PeBxAQRYVIFa@b@]b@IHSTOTQVONY\\{CtEU^[d@a@`@aA`BKPYd@IPOTQXEJ]h@}@`Bi@`Ag@`AUd@S^CF[t@Sj@GRUx@I`@I`@?@E`@ObBALGr@[nDAv@MlAOpAKb@]dACFELILQ`@MXeA~Bk@bBa@dAKXq@~AiAdC_AtBm@rAGPSh@a@xA[x@O^Yv@]`ASv@U|@Kt@QvAMzAKtAElAGd@";
+    // final decodedPolyPoints = PolylinePoints().decodePolyline(encodedPolyPointsString);
+    // print(decodedPolyPoints);
+
+    final polyline = Polyline(
+      polylineId: const PolylineId('vehicle_history'),
+      points: listOfPolyLinePoints,
+      // points:  decodedPolyPoints.map((e) => LatLng(e.latitude, e.longitude)).toList(),
+      color: Colors.black, // You can customize the polyline color
+      width: 5,
+    );
+
+    _polyLines.clear();
+    _polyLines.add(polyline);
   }
 
 //! function to retrieve the autocomplete data from get-places API of google maps
@@ -244,38 +267,38 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
         markerId: MarkerId('marker_$counter'),
         position: point,
         onTap: ()  async{
-          debugPrint("===================Marker tapped =================");
-          final providerObject = ref.read(infoWindowProvider);
-          providerObject.updateInfoWindow(
-            context,
-            mapController,
-            point,
-            _infoWindowWidth,
-            _markerOffset,
-          );
-          providerObject
-              .updateVehicle(
-              Vehicle(
-                  2,
-                  "Demo Vehicle 2",
-                  true,
-                  "17/9/2023 - 2:21 PM",
-                  0,
-                point,
-                Position(longitude: providerObject.vehicle!.coordinate.latitude, latitude: providerObject.vehicle!.coordinate.longitude, timestamp: null, accuracy: 0, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0)
-              )
-          );
-          providerObject.updateVisibility(true);
-          providerObject.rebuildInfoWindow();
+          // debugPrint("===================Marker tapped =================");
+          // final providerObject = ref.read(infoWindowProvider);
+          // providerObject.updateInfoWindow(
+          //   context,
+          //   mapController,
+          //   point,
+          //   _infoWindowWidth,
+          //   _markerOffset,
+          // );
+          // providerObject
+          //     .updateVehicle(
+          //     Vehicle(
+          //         2,
+          //         "Demo Vehicle 2",
+          //         true,
+          //         "17/9/2023 - 2:21 PM",
+          //         0,
+          //       point,
+          //       Position(longitude: providerObject.vehicle!.coordinate.latitude, latitude: providerObject.vehicle!.coordinate.longitude, timestamp: null, accuracy: 0, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0)
+          //     )
+          // );
+          // providerObject.updateVisibility(true);
+          // providerObject.rebuildInfoWindow();
         },
-        icon: BitmapDescriptor.defaultMarker);
+        icon: markerIcon);
 
     setState(() {
       _markers.add(marker);
     });
   }
 
-  void setCustomMarker(Position position) {
+  void setVehicleMarker(Position position) {
     _markers.add(Marker(
       markerId: const MarkerId("currentLocation"),
       icon: currentLocationIcon,
@@ -332,6 +355,12 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
             "assets/mapicons/arrow.png")
         .then((icon) {
       arrowIcon = icon;
+    });
+    BitmapDescriptor.fromAssetImage(
+        const ImageConfiguration(size: Size(48, 48)),
+        "assets/marker.png")
+        .then((icon) {
+      markerIcon = icon;
     });
   }
 
@@ -497,6 +526,7 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
                   top: 0,
                   child: CustomInfoWidget(providerObject: providerObject)),
               //!stack of navigate to user current location using GPS
+              drawPolyLines(),
               showGPSLocator(),
               showLiveLocation(),
               //!Stack to show origin to Destination Direction
@@ -536,7 +566,6 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
         child: FloatingActionButton(
           onPressed: () async {
             GoogleMapController controller = await _controller.future;
-            developer.log('pressed');
             getCurrentUserLocation().then((value) async {
               await controller.animateCamera(
                 CameraUpdate.newCameraPosition(
@@ -547,6 +576,7 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
               );
               _setMarker(LatLng(value.latitude, value.longitude),
                   info: "My Current Location");
+              developer.log("${value.latitude} , ${value.longitude}");
             });
           },
           child: const Icon(Icons.my_location_rounded),
@@ -567,6 +597,30 @@ class _PracticePageState extends ConsumerState<HomeScreen> {
             getCurrentLiveLocation();
           },
           child: const Icon(Icons.delivery_dining),
+        ),
+      ),
+    );
+  }
+
+
+  Positioned drawPolyLines() {
+    return Positioned(
+      bottom: MediaQuery.of(context).size.height * 0.30,
+      right: 5,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 20.0),
+        child: FloatingActionButton(
+          onPressed: () async {
+            _drawPolyLines(polylineCoordinatesDhaka);
+            _markers.addAll(createArrowMarkers(polylineCoordinatesDhaka, 3));
+            setState(() {
+
+            });
+            // for (LatLng point in polylineCoordinatesDhaka) {
+            //   _setMarker(point);
+            // }
+          },
+          child: const Icon(Icons.draw),
         ),
       ),
     );
